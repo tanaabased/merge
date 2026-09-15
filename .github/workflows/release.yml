@@ -29,7 +29,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .node-version
           package-manager-cache: false
           registry-url: https://registry.npmjs.org
 
@@ -41,6 +41,7 @@ jobs:
           bun run lint
           bun run typecheck
           bun run test
+          bun run docs:check
 
       - name: Export formatted release date
         run: echo "RELEASE_DATE=$(date -d "${{ github.event.release.published_at }}" "+%B %e, %Y" | tr -s ' ')" >> "$GITHUB_ENV"
@@ -78,3 +79,23 @@ jobs:
         run: |
           npm publish "$PACKAGE_TARBALL" --access public --tag edge --dry-run
           npm publish "$PACKAGE_TARBALL" --access public --tag edge
+
+      - name: Synchronize edge tag to stable
+        if: ${{ github.event.release.prerelease == false }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TANAAB_NPM_DEPLOY }}
+        run: |
+          PACKAGE=$(bun -p "require('./package.json').name")
+          VERSION=$(bun -p "require('./package.json').version")
+          npm dist-tag add "$PACKAGE@$VERSION" edge
+
+      - name: Verify release channels
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          PACKAGE=$(bun -p "require('./package.json').name")
+          VERSION=$(bun -p "require('./package.json').version")
+          test "$(npm view "$PACKAGE" dist-tags.edge)" = "$VERSION"
+          if [ "$PRERELEASE" = "false" ]; then
+            test "$(npm view "$PACKAGE" dist-tags.latest)" = "$VERSION"
+          fi
