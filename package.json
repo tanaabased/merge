@@ -1,6 +1,6 @@
 {
   "name": "@tanaab/merge",
-  "version": "0.1.0-beta.1",
+  "version": "1.0.0",
   "description": "Deep object merging with configurable array merging strategies.",
   "author": "Mike Pirog @pirog",
   "keywords": [
