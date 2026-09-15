@@ -2,11 +2,14 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const root = join(import.meta.dirname, '..');
 const temporaryDirectory = mkdtempSync(join(tmpdir(), 'tanaab-merge-'));
-const tarball = join(temporaryDirectory, 'tanaab-merge.tgz');
+const suppliedTarball = process.argv[2];
+const tarball = suppliedTarball
+  ? resolve(root, suppliedTarball)
+  : join(temporaryDirectory, 'tanaab-merge.tgz');
 const consumer = join(temporaryDirectory, 'consumer');
 
 function run(command: string, arguments_: string[], cwd = root): string {
@@ -18,7 +21,9 @@ function run(command: string, arguments_: string[], cwd = root): string {
 }
 
 try {
-  run(process.execPath, ['pm', 'pack', '--filename', tarball, '--ignore-scripts', '--quiet']);
+  if (!suppliedTarball) {
+    run(process.execPath, ['pm', 'pack', '--filename', tarball, '--ignore-scripts', '--quiet']);
+  }
 
   const packageFiles = run('tar', ['-tzf', tarball])
     .trim()
