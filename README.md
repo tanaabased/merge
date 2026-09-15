@@ -31,76 +31,42 @@ Or install with npm:
 npm install @tanaab/merge
 ```
 
-The package supports Bun 1.3.10 or newer and Node.js 20 or newer.
+The package supports Bun 1.3.10 or newer and Node.js 24 or newer.
 
-## Merge objects
-
-`merge(target, sources, arrayStrategies?)` deeply merges one source object or an array of source objects into `target` and returns that same target. Lodash's `mergeWith` owns ordinary object merging.
+## Usage
 
 ```ts
-import { merge } from '@tanaab/merge';
+import { merge, mergeArrays } from '@tanaab/merge';
 
-const config = merge({ service: { host: 'localhost', ports: [80] } }, [
-  { service: { ports: [443] } },
-  { service: { secure: true } },
-]);
+const config = merge({ service: { host: 'localhost' } }, { service: { port: 8080 } });
+// { service: { host: 'localhost', port: 8080 } }
+
+const tags = mergeArrays(['stable'], ['preview'], 'concat');
+// ['stable', 'preview']
 ```
 
-The default array strategy is `['merge:id', 'replace']`: arrays containing plain objects merge by `id`; other arrays use Lodash's index-based merge. Pass a strategy or `[primary, fallback]` tuple to change that behavior.
+`merge` mutates and returns its target. Its default array strategy is `['merge:id', 'replace']`:
+existing target arrays containing plain objects merge by `id`; other arrays use Lodash's index-based merge.
+`replace` preserves unmatched trailing entries; it does not replace the whole array.
 
-```ts
-merge({ tags: ['stable'] }, { tags: ['preview'] }, 'concat');
-// {tags: ['stable', 'preview']}
+See [API.md](API.md) for all public exports, parameters, return values, strategies, and mutation limits.
 
-merge(
-  { services: [{ name: 'app', port: 80 }] },
-  { services: [{ name: 'app', secure: true }] },
-  'merge:name',
-);
-// {services: [{name: 'app', port: 80, secure: true}]}
-```
-
-## Merge arrays
-
-`mergeArrays(first, second, strategy?)` applies one strategy directly:
-
-| Strategy      | Behavior                                                                                  |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| `replace`     | Lodash-merges indexes from `second` into `first`; this is the default and mutates `first` |
-| `concat`      | Returns `first.concat(second)`                                                            |
-| `first`       | Returns `first` unchanged and by reference                                                |
-| `last`        | Returns `second` unchanged and by reference                                               |
-| `aoa`         | Nests both inputs when `first` has one item; otherwise appends `second`                   |
-| `merge:<key>` | Merges array entries by the named object property; `merge` alone uses `id`                |
-
-```ts
-import { mergeArrays } from '@tanaab/merge';
-
-mergeArrays([1, 2], [3], 'concat');
-// [1, 2, 3]
-
-mergeArrays([{ id: 'app', port: 80 }], [{ id: 'app', secure: true }], 'merge:id');
-// [{id: 'app', port: 80, secure: true}]
-```
-
-## Input and mutation limits
-
-- `merge` expects a mutable target object and either one source object or an array of source objects. An empty source array is a no-op. It mutates the target and may mutate nested target values.
-- The optional strategy tuple must contain a primary strategy; an empty tuple is unsupported.
-- `mergeArrays` is typed for two mutable arrays. `replace` mutates the first array and nested target values; `first` and `last` return an input directly. `aoa`, `concat`, and `merge:<key>` return a new outer array.
-- `replace` means Lodash's index-based array merge, not whole-array replacement. Changing that inherited behavior would be a breaking semantic change.
-- `merge:<key>` expects array entries to be plain objects with stable unique identifiers. A one-key object without the requested identifier uses its sole key; other missing identifiers can collide through JavaScript property-key coercion.
-- Unsupported or mismatched values retain the pinned implementation's incidental Lodash and native-array behavior. Do not rely on that behavior as a validation or coercion API.
+Stable releases update both `latest` and `edge`; prereleases update only `edge`.
+Use `@tanaab/merge@edge` to follow the newest release, including prereleases.
 
 ## Development
 
 ```sh
-bun install --frozen-lockfile
+bun install --frozen-lockfile --ignore-scripts
 bun run lint
 bun run typecheck
 bun run test
+bun run docs:check
 bun run test:package
 ```
+
+`test:package` requires Node and npm and tests an isolated installation of the built tarball.
+Regenerate the API reference after public documentation changes with `bun run docs`.
 
 ## Issues, Questions and Support
 

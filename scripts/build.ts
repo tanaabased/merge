@@ -36,4 +36,3 @@ run(['./node_modules/typescript/bin/tsc', '--project', 'tsconfig.build.json']);
 
 copyFileSync(join(dist, 'index.d.ts'), join(dist, 'index.d.mts'));
 copyFileSync(join(dist, 'index.d.ts'), join(dist, 'index.d.cts'));
-rmSync(join(dist, 'utils'), { force: true, recursive: true });
