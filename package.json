@@ -1,7 +1,17 @@
 {
   "name": "@tanaab/merge",
   "version": "0.1.0-beta.1",
-  "description": "Composable object and array merge utilities extracted from Lando.",
+  "description": "Deep object merging with configurable array merging strategies.",
+  "author": "Mike Pirog @pirog",
+  "keywords": [
+    "tanaab",
+    "merge",
+    "deep-merge",
+    "array-merge",
+    "lodash",
+    "typescript",
+    "bun"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,6 +36,10 @@
   ],
   "sideEffects": false,
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tanaabased/merge.git"

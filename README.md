@@ -76,6 +76,18 @@ Use the [issue queue](https://github.com/tanaabased/merge/issues) to report bugs
 
 See [CHANGELOG.md](https://github.com/tanaabased/merge/blob/main/CHANGELOG.md) and the [GitHub releases](https://github.com/tanaabased/merge/releases) for published changes.
 
-## Provenance and License
+## Maintainers
 
-The helpers are adapted from Lando's [`merge.js`](https://github.com/lando/core-next/blob/9cc398d21bf35b8662a199fb9815024d24d599c1/utils/merge.js) and [`merge-arrays.js`](https://github.com/lando/core-next/blob/9cc398d21bf35b8662a199fb9815024d24d599c1/utils/merge-arrays.js) at commit `9cc398d21bf35b8662a199fb9815024d24d599c1`. That source package declares the MIT License. See [LICENSE](LICENSE) for attribution and terms.
+- [@pirog](https://github.com/pirog)
+
+## Contributors
+
+<a href="https://github.com/tanaabased/merge/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tanaabased/merge" alt="Merge contributors" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
+
+## License
+
+`@tanaab/merge` is licensed under the [MIT License](./LICENSE).
