@@ -1,7 +1,7 @@
 <h1 align="center">@tanaab/merge</h1>
 
 <p align="center">
-  Composable Lodash-backed object and array merge utilities for Bun, Node.js, and TypeScript.
+  Deep object merging with configurable array strategies—concatenate, select, merge by key, or merge by index—for Bun, Node.js, and TypeScript.
 </p>
 
 <p align="center">
