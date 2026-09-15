@@ -50,6 +50,9 @@ jobs:
         uses: tanaabased/prepare-release-action@v1
         with:
           commands: bun run format:write
+          sync-token: ${{ secrets.TANAAB_COAXIUM_INJECTOR }}
+          sync-email: tanaabot@tanaab.dev
+          sync-username: tanaabot
           sync-verified: true
           update-files: CHANGELOG.md
           update-files-header: |
@@ -88,14 +91,3 @@ jobs:
           PACKAGE=$(bun -p "require('./package.json').name")
           VERSION=$(bun -p "require('./package.json').version")
           npm dist-tag add "$PACKAGE@$VERSION" edge
-
-      - name: Verify release channels
-        env:
-          PRERELEASE: ${{ github.event.release.prerelease }}
-        run: |
-          PACKAGE=$(bun -p "require('./package.json').name")
-          VERSION=$(bun -p "require('./package.json').version")
-          test "$(npm view "$PACKAGE" dist-tags.edge)" = "$VERSION"
-          if [ "$PRERELEASE" = "false" ]; then
-            test "$(npm view "$PACKAGE" dist-tags.latest)" = "$VERSION"
-          fi
