@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -22,7 +22,16 @@ function run(command: string, arguments_: string[], cwd = root): string {
 
 try {
   if (!suppliedTarball) {
-    run(process.execPath, ['pm', 'pack', '--filename', tarball, '--ignore-scripts', '--quiet']);
+    const packed = run('npm', [
+      'pack',
+      '--ignore-scripts',
+      '--pack-destination',
+      temporaryDirectory,
+      '--json',
+    ]);
+    const [artifact] = JSON.parse(packed) as Array<{ filename: string }>;
+    assert.ok(artifact, 'npm pack must produce one tarball');
+    renameSync(join(temporaryDirectory, artifact.filename), tarball);
   }
 
   const packageFiles = run('tar', ['-tzf', tarball])
@@ -31,6 +40,7 @@ try {
     .filter((file) => !file.endsWith('/'))
     .sort();
   assert.deepEqual(packageFiles, [
+    'package/API.md',
     'package/LICENSE',
     'package/README.md',
     'package/dist/index.cjs',
@@ -38,6 +48,8 @@ try {
     'package/dist/index.d.mts',
     'package/dist/index.d.ts',
     'package/dist/index.js',
+    'package/dist/utils/merge-arrays.d.ts',
+    'package/dist/utils/merge.d.ts',
     'package/package.json',
   ]);
 
