@@ -20,17 +20,127 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
       - name: Install Bun
-        uses: oven-sh/setup-bun@v2
+        uses: tanaabased/actions/setup-bun@v1
         with:
-          bun-version-file: .bun-version
+          test-mode: true
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: tanaabased/actions/setup-node@v1
         with:
-          node-version-file: .node-version
-          package-manager-cache: false
+          test-mode: true
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
       - name: Validate API reference
         run: bun run docs:check
       - name: Test packed package
         run: bun run test:package
+
+  publish-npm:
+    name: publish-npm (${{ matrix.case }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: stable
+            release-version: v1.0.1
+            package-version: 1.0.1
+            expected-channel: latest
+            expected-release-type: stable
+          - case: prerelease
+            release-version: v1.0.1-test.1
+            package-version: 1.0.1-test.1
+            expected-channel: edge
+            expected-release-type: prerelease
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Prepare release
+        uses: tanaabased/actions/prepare-release@v1
+        with:
+          test-mode: true
+          version: ${{ matrix.release-version }}
+          release-date: 2026-09-17T12:00:00Z
+          release-url: https://example.invalid/releases/test
+          commands: |
+            bun install --frozen-lockfile --ignore-scripts
+            bun run lint
+            bun run typecheck
+            bun run test
+            bun run docs:check
+            bun run build
+            bun run format:write
+            bun run format:check
+
+      - name: Pack package
+        id: pack
+        uses: tanaabased/actions/npm-pack@v1
+        with:
+          test-mode: true
+
+      - name: Test packed package
+        run: bun run ./scripts/test-package.ts "${{ steps.pack.outputs.tarball-path }}"
+
+      - name: Validate npm publication
+        id: publish
+        uses: tanaabased/actions/publish-npm@v1
+        with:
+          test-mode: true
+          tarball: ${{ steps.pack.outputs.tarball-path }}
+          update-prerelease-tag-on-stable: true
+
+      - name: Verify publication metadata
+        env:
+          EXPECTED_CHANNEL: ${{ matrix.expected-channel }}
+          EXPECTED_RELEASE_TYPE: ${{ matrix.expected-release-type }}
+          EXPECTED_VERSION: ${{ matrix.package-version }}
+          PACKED_TARBALL: ${{ steps.pack.outputs.tarball-path }}
+          PUBLISHED_CHANNEL: ${{ steps.publish.outputs.channel }}
+          PUBLISHED_NAME: ${{ steps.publish.outputs.package-name }}
+          PUBLISHED_RELEASE_TYPE: ${{ steps.publish.outputs.release-type }}
+          PUBLISHED_TARBALL: ${{ steps.publish.outputs.tarball-path }}
+          PUBLISHED_VERSION: ${{ steps.publish.outputs.package-version }}
+        run: |
+          test "$PUBLISHED_TARBALL" = "$PACKED_TARBALL"
+          test "$PUBLISHED_NAME" = '@tanaab/merge'
+          test "$PUBLISHED_VERSION" = "$EXPECTED_VERSION"
+          test "$PUBLISHED_CHANNEL" = "$EXPECTED_CHANNEL"
+          test "$PUBLISHED_RELEASE_TYPE" = "$EXPECTED_RELEASE_TYPE"
+
+  publish-repo:
+    name: publish-repo
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate repository publication
+        id: publish
+        uses: tanaabased/actions/publish-repo@v1
+        with:
+          test-mode: true
+          version: v1.0.1
+          release-date: 2026-09-17T12:00:00Z
+          release-url: https://example.invalid/releases/test
+          commands: |
+            bun install --frozen-lockfile --ignore-scripts
+            bun run lint
+            bun run typecheck
+            bun run test
+            bun run docs:check
+            bun run build
+            bun run format:write
+            bun run format:check
+
+      - name: Verify prepared files without synchronization
+        env:
+          RESOLVED_VERSION: ${{ steps.publish.outputs.resolved-version }}
+        run: |
+          test "$RESOLVED_VERSION" = 'v1.0.1'
+          test "$(node --print "require('./package.json').version")" = '1.0.1'
+          grep --fixed-strings '## v1.0.1 - [September 17, 2026](https://example.invalid/releases/test)' CHANGELOG.md
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
